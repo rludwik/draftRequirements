@@ -46,11 +46,6 @@ const GenerateDoc = () => {
         heading: HeadingLevel.HEADING_2,
     });
 
-    const body =  new Paragraph({
-       text: "new paragraph"
-    })
-
-
     const startPDF = () => {
         resetStates()
         const doc = new Document({
