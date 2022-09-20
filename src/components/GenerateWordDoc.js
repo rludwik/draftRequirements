@@ -3,14 +3,28 @@ import * as docx from "docx";
 import { saveAs } from "file-saver";
 import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType} from "docx";
 import React from 'react';
-import {Button, Form, Grid, Input, Radio} from 'semantic-ui-react';
+import {Button, Form, Grid, Radio} from 'semantic-ui-react';
 import '../styles/GenerateWordDoc.css'
 
 const GenerateDoc = () => {
-    const [fileName, setFileName] = useState('WordDoc')
-    const [clientName, setClientName] = useState('No Client')
+    const spacing = 200;
+    const [asAnOwner, setAsAnOwner] = useState('')
+    const [userInteraction, setUserInteraction] = useState('')
+    const [userMeasurement, setUserMeasurement] = useState('')
+    const [fileName, setFileName] = useState('')
+    const [clientName, setClientName] = useState('')
     const [docTitle, setDocTitle] = useState('')
-    const [draftType, setDraftType] = React.useState('')
+    const [draftType, setDraftType] = useState('Web')
+    
+    const resetStates = () => {
+        setAsAnOwner('')
+        setUserInteraction('')
+        setUserMeasurement('')
+        setFileName('')
+        setClientName('')
+        setDocTitle('')
+        setDraftType('Web')
+    }
 
     const Title =  new Paragraph({
         children: [
@@ -33,31 +47,63 @@ const GenerateDoc = () => {
     });
 
     const body =  new Paragraph({
-        children: [
-        new TextRun(`As a`),
-        new TextRun({
-            text: "Foo Bar",
-            bold: false,
-
-        }),
-        new TextRun({
-            text: "\tGithub is the best",
-            bold: true,
-        }),
-        ],
+       text: "new paragraph"
     })
 
+
     const startPDF = () => {
-        setFileName('NewWordDoc')
+        resetStates()
         const doc = new Document({
         sections: [
             {
-            properties: {type: SectionType.CONTINUOUS},
-            children: [Title]
+                properties: {type: SectionType.CONTINUOUS},
+                children: [Title]
             },
             {
-            properties: {type: SectionType.CONTINUOUS},
-            children: [Header, body]
+                properties: {type: SectionType.CONTINUOUS},
+                children: [
+                    Header,
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: "AS A:  ",
+                                bold: true,
+                            }),
+                            new TextRun({
+                                text: asAnOwner,
+                            }),
+                        ],
+                        spacing: {before: spacing}
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: "I WANT TO: ",
+                                bold: true,
+                            }),
+                            new TextRun({
+                                text: `Measure engagement with ${userMeasurement}`,
+                            }),
+                        ],
+                        spacing: {before: spacing}
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: "SO THAT:  ",
+                                bold: true,
+                            }),
+                            new TextRun({
+                                text: `I can understand user's interaction with ${userInteraction}`,
+                            }),
+                        ],
+                        spacing: {before: spacing},
+                    }),
+                    new Paragraph({
+                        spacing: {before: 100},
+                        thematicBreak: true,
+                    }),
+                ]
             }, 
             // {
             //   properties: {type: SectionType.CONTINUOUS},
@@ -67,33 +113,80 @@ const GenerateDoc = () => {
         });  
         
         docx.Packer.toBlob(doc).then((blob) => {
-        saveAs(blob, `${fileName}.docx`)
+        saveAs(blob, `${fileName.slice()}.docx`)
         });
     }
 
     const selectDraftType = (e, data) => {
-        const isChecked = data.checked
-        setDraftType(data.value)
-        console.log(e)
-        console.log(data.value, isChecked)
+        setDraftType(data.value);
     }
 
     const form = () => {
         return(
-            <Grid.Column className="inputForm" >
+            <Grid.Column style={{width:'70rem'}} className="inputForm" >
                 <Form onSubmit={startPDF}>
                     <Grid columns={2}>
+                        <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Word Document Generator!</h2></Grid.Row>
                         <Grid.Row>
-                            <Grid.Column width={11}>
-                            <Input className="input-labal" label="Title" placeholder="Title or word document " onChange={(e) => setDocTitle(e.target.value)} />
-                                <br />
-                                <br />
-                                <Input className="input-labal" label="Client" placeholder="Arby's, UHC, etc. " onChange={(e) => setClientName(e.target.value)} />
-                                <br/>
-                                <br/>
-                            
+                            <Grid.Column width={8}>
+                                <Form.Input
+                                    value={docTitle}
+                                    maxLength={45}
+                                    required 
+                                    className="input-labal" 
+                                    label="Word Document Title" 
+                                    placeholder="Title for word document " 
+                                    onChange={(e) => setDocTitle(e.target.value)} 
+                                />
+                                <Form.Input 
+                                    value={clientName}
+                                    maxLength={45}
+                                    required
+                                    className="input-labal" 
+                                    label="Client" 
+                                    placeholder="Arby's, UHC, etc." 
+                                    onChange={(e) => setClientName(e.target.value)}
+                                />
+                                <Form.Input 
+                                    value={asAnOwner}
+                                    maxLength={30}
+                                    required
+                                    className="input-labal" 
+                                    label="As a:" 
+                                    placeholder="Business Owner" 
+                                    onChange={(e) => setAsAnOwner(e.target.value)}
+                                />
+                                <Form.Input 
+                                    value={userMeasurement}
+                                    maxLength={45}
+                                    required
+                                    className="input-labal" 
+                                    label="I Want to Measure Engagement with:" 
+                                    placeholder='"The reorder button on the orders screen"' 
+                                    onChange={(e) => setUserMeasurement(e.target.value)}
+                                />
+                                <Form.Input 
+                                    value={userInteraction}
+                                    maxLength={45}
+                                    required
+                                    className="input-labal" 
+                                    label="So that I can understand user interaction with:" 
+                                    placeholder='"The reorder button on the orders screen"' 
+                                    onChange={(e) => setUserInteraction(e.target.value)}
+                                />
                             </Grid.Column>
-                            <Grid.Column width={2}>
+                            <Grid.Column width={8}>
+                                <Form.Input
+                                    maxLength={50}
+                                    required
+                                    label={fileName.length === 0 ? "Desired File Name" : `File: "${fileName}.docx"`}
+                                    labelPosition='right'
+                                    placeholder='Enter desired file name'
+                                    className="input-labal"
+                                    value={fileName}
+                                    onChange={(e, data) => (setFileName(data.value))}
+                                />
+                                <br />
                                 <Radio
                                     label='App'
                                     name='radioGroup'
@@ -101,7 +194,7 @@ const GenerateDoc = () => {
                                     checked={draftType === 'App'}
                                     onChange={selectDraftType}
                                 />
-                                <br/>
+                                <br />
                                 <Radio
                                     label='Web'
                                     name='radioGroup'
@@ -111,7 +204,8 @@ const GenerateDoc = () => {
                                 />
                             </Grid.Column>
                         </Grid.Row>    
-                    </Grid>    
+                    </Grid>
+                    
                     <Button type="submit" style={{float:'right'}} >
                         Generate {draftType.toUpperCase()} Word Document
                     </Button>
@@ -123,14 +217,7 @@ const GenerateDoc = () => {
     return (
         <div className="container">
             <div className="inputs">
-                <Grid columns={3}>
-                    <Grid.Row>
-                    <Grid.Column></Grid.Column>
-                    {form()}
-                    <Grid.Column></Grid.Column>
-                    </Grid.Row>
-                </Grid>
-                
+                {form()}                
             </div>
         </div>
     );
