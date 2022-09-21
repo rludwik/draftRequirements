@@ -1,27 +1,30 @@
 import {useState} from "react";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
-import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType} from "docx";
+import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType, Table, TableRow, TableCell, ShadingType, WidthType, convertInchesToTwip} from "docx";
 import React from 'react';
 import {Button, Form, Grid, Message, Popup, Radio} from 'semantic-ui-react';
 import '../styles/GenerateWordDoc.css'
 
+import {mobileText, webText} from '../components/Constants'
+
 export const GenerateDoc = () => {
     const spacing = 200;
-    const [asAnOwner, setAsAnOwner] = useState('')
-    const [userInteraction, setUserInteraction] = useState('')
-    const [userMeasurement, setUserMeasurement] = useState('')
-    const [fileName, setFileName] = useState('')
-    const [clientName, setClientName] = useState('')
-    const [docTitle, setDocTitle] = useState('')
-    const [scopeTitle, setScopeTitle] = useState('')
+    const [asAnOwner, setAsAnOwner] = useState('test')
+    const [userInteraction, setUserInteraction] = useState('test')
+    const [userMeasurement, setUserMeasurement] = useState('test')
+    const [fileName, setFileName] = useState('test')
+    const [clientName, setClientName] = useState('test')
+    const [docTitle, setDocTitle] = useState('test')
+    const [scopeTitle, setScopeTitle] = useState('test')
     const [draftType, setDraftType] = useState('Web')
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
     const [disableDocTitle, setDisableDocTitle] = useState(false);
     const [scopeMessage, setScopeMessage] = useState('Scope Added!')
+    const [googleAnalytics, setGoogleAnalytics] = useState(true)
+    const [universalAnalytics, setUniversalAnalytics] = useState(false)
 
-    
     const resetStates = () => {
         setAllScopes([])
         setScopeNames([])
@@ -84,6 +87,178 @@ export const GenerateDoc = () => {
         children: [Title]
     }
 
+    const BulletPoints = [
+        new Paragraph({
+            text: `Ticket is for ${draftType.includes('Web') ? draftType : `Mobile ${draftType}`}`,
+            bullet: {level: 0} //Max level is 9
+        }),
+        new Paragraph({
+            text: `Visitor is on ${draftType}`,
+            bullet: {level: 0}
+        }),
+        new Paragraph({
+            text: "Testing will be done by Ovative Analytics Team",
+            bullet: {level: 0}
+        }),
+        new Paragraph({
+            text: "Values in the provided code",
+            bullet: {level: 0}
+        }),
+            new Paragraph({
+                text: "If in quotes, indicate static values",
+                bullet: {level: 1}
+            }),
+            new Paragraph({
+                text: "If in double brackets, indicate dynamic values",
+                bullet: {level: 1}
+            }),
+            new Paragraph({
+                text: "If in quotes with a commented value, indicate possible static values",
+                bullet: {level: 1}
+            }),
+    ]
+
+    const TableMargins = {
+        top: convertInchesToTwip(0.05),
+        bottom: convertInchesToTwip(0.05),
+        left: convertInchesToTwip(0.05),
+        right: convertInchesToTwip(0.05)
+    }
+
+
+    let aTable;
+    let googleOrUniversal;
+
+    if(googleAnalytics && !universalAnalytics){
+        googleOrUniversal = [
+            new Paragraph('   custom_parameter1: "{{<<DYNAMIC VALUE1>>}}",'),
+            new Paragraph('   custom_parameter2: "<<STATIC VALUE2>>",'),
+            new Paragraph('   custom_parameter3: "<<STATIC VALUE3>>" // or <<ALTERNATE STATIC VALUE3>>'),
+        ]
+    } else if(universalAnalytics && !googleAnalytics){
+        googleOrUniversal = [
+            new Paragraph('   event_category: "<<CATEGORY>>",'),
+            new Paragraph('   event_action: "<<ACTION>>"'),
+            new Paragraph('   event_label: "<<LABEL>>'),
+        ]
+        
+    } else if(universalAnalytics && googleAnalytics) {
+        googleOrUniversal = [
+            new Paragraph('   event_category: "<<CATEGORY>>",'),
+            new Paragraph('   event_action: "<<ACTION>>"'),
+            new Paragraph('   event_label: "<<LABEL>>'),
+            new Paragraph('   custom_parameter1: "{{<<DYNAMIC VALUE1>>}}",'),
+            new Paragraph('   custom_parameter2: "<<STATIC VALUE2>>",'),
+            new Paragraph('   custom_parameter3: "<<STATIC VALUE3>>" // or <<ALTERNATE STATIC VALUE3>>')
+        ]
+    } else {
+        googleOrUniversal = [
+            new Paragraph('    PLEASE SELECT GOOGLE OR UNIVERSAL BOX FROM THE FORM!')
+        ]
+    }
+
+    if(draftType === 'Web'){
+        aTable = new Table({
+            rows: [
+                new TableRow({
+                    children: [
+                        new TableCell({
+                            shading: {
+                                fill: "eeeeee",
+                                type: ShadingType.CLEAR,
+                                color: "auto",
+                            },
+                            margins: TableMargins,
+                            children: [
+                                new Paragraph('dataLayer.push({'),
+                                new Paragraph('   event: "<<EVENT NAME>>",'),
+                                ...googleOrUniversal,
+                                new Paragraph('}); ')
+                            ]
+                        })
+                    ],
+                }),
+            ],
+            width: {
+                size: 100,
+                type: WidthType.PERCENTAGE
+            },
+        })
+    } else {
+        aTable = new Table({
+        rows: [
+            new TableRow({
+                children: [
+                    new TableCell({
+                        shading: {
+                            fill: "eeeeee",
+                            type: ShadingType.CLEAR,
+                            color: "auto",
+                        },
+                        margins: TableMargins,
+                        children: [
+                            new Paragraph('mFirebaseAnalytics.logEvent("<<EVENT NAME>>", { '),
+                            ...googleOrUniversal,
+                            new Paragraph('}); ')
+                    ]
+                    })
+                ],
+            }),
+        ],
+        width: {
+            size: 100,
+            type: WidthType.PERCENTAGE
+        }
+        })
+    }
+    
+    const Scenario = [
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "SCENARIO:",
+                    bold: true,
+                })
+            ],
+            spacing: {before: spacing, after: spacing}
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "ON:  ",
+                    bold: true
+                }),
+                new TextRun({
+                    text: " // SOME IMAGE WIL GO HERE //",
+                })
+            ]
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "WHEN:  ",
+                    bold: true,
+                }),
+                new TextRun({
+                    text: " A user interacts with the REORDER button",
+                })
+            ]
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "THEN:  ",
+                    bold: true,
+                }),
+                new TextRun({
+                    text: "  Push the following data layer code:",
+                })
+            ],
+            spacing: {after: spacing},
+        }),
+        aTable   
+    ]   
+
     const CreateScope = () => {
         setDisableDocTitle(true)
         setScopeNames(oldArray => [...oldArray, scopeTitle]);
@@ -129,78 +304,22 @@ export const GenerateDoc = () => {
                 }),
                 LineBreak,
                 Assumptions,
-                new Paragraph({
-                    text: `Ticket is for ${draftType.includes('Web') ? draftType : `Mobile ${draftType}`}`,
-                    bullet: {level: 0} //Max level is 9
-                }),
-                new Paragraph({
-                    text: `Visitor is on ${draftType}`,
-                    bullet: {level: 0}
-                }),
-                new Paragraph({
-                    text: "Testing will be done by Ovative Analytics Team",
-                    bullet: {level: 0}
-                }),
-                new Paragraph({
-                    text: "Values in the provided code",
-                    bullet: {level: 0}
-                }),
-                    new Paragraph({
-                        text: "If in quotes, indicate static values",
-                        bullet: {level: 1}
-                    }),
-                    new Paragraph({
-                        text: "If in double brackets, indicate dynamic values",
-                        bullet: {level: 1}
-                    }),
-                    new Paragraph({
-                        text: "If in quotes with a commented value, indicate possible static values",
-                        bullet: {level: 1}
-                    }),
+                ...BulletPoints,
                 LineBreak,
                 AcceptanceCriteria,
+                ...Scenario,
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: "SCENARIO 1:",
+                            text: "References:  ",
                             bold: true,
+                        }),
+                        new TextRun({
+                            text: draftType === 'Web' ? webText : mobileText,
                         })
                     ],
-                    spacing: {before: spacing, after: spacing}
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "ON:  ",
-                            bold: true
-                        }),
-                        new TextRun({
-                            text: " // SOME IMAGE WIL GO HERE //",
-                        })
-                    ]
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "WHEN:  ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: " A user interacts with the REORDER button",
-                        })
-                    ]
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "THEN:  ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: "  Push the following data layer code:",
-                        })
-                    ]
-                }),
+                    spacing: {before: 400}
+                })
             ]
         }
         setAllScopes(oldArray => [...oldArray, scope]);
@@ -314,21 +433,39 @@ export const GenerateDoc = () => {
                                     onChange={(e) => setUserInteraction(e.target.value)}
                                 />
                                 <br />
-                                <Radio
-                                    label='App'
-                                    name='radioGroup'
-                                    value='App'
-                                    checked={draftType === 'App'}
-                                    onChange={selectDraftType}
-                                />
-                                <br />
-                                <Radio
-                                    label='Web'
-                                    name='radioGroup'
-                                    value='Web'
-                                    checked={draftType === 'Web'}
-                                    onChange={selectDraftType}
-                                />
+                                <Grid columns={2}>
+                                <Grid.Row >
+                                    <Grid.Column width={3} >
+                                            <Radio
+                                            label='App'
+                                            name='radioGroup'
+                                            value='App'
+                                            checked={draftType === 'App'}
+                                            onChange={selectDraftType}
+                                        />
+                                        <br />
+                                        <Radio
+                                            label='Web'
+                                            name='radioGroup'
+                                            value='Web'
+                                            checked={draftType === 'Web'}
+                                            onChange={selectDraftType}
+                                        />
+                                    </Grid.Column>
+                                    <Grid.Column width={8}>
+                                        <Form.Checkbox
+                                            checked={googleAnalytics}
+                                            label={<label>Google Analytics 4</label>}
+                                            onClick={(e, data) => setGoogleAnalytics(data.checked)}
+                                        />
+                                        <Form.Checkbox
+                                            checked={universalAnalytics}
+                                            label={<label>Universal Analytics</label>}
+                                            onClick={(e, data) => setUniversalAnalytics(data.checked)}
+                                        />
+                                    </Grid.Column>
+                                </Grid.Row>
+                                </Grid>
                                {scopeNames.length>0 && <Message style={{overflowY: 'auto'}}>
                                     <Message.List>
                                         {scopeNames.map((scope, id) => {
