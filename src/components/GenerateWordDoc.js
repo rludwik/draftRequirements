@@ -31,7 +31,7 @@ export const GenerateDoc = () => {
         setFileName('')
         setClientName('')
         setDocTitle('')
-        scopeTitle('')
+        setScopeTitle('')
         setDraftType('Web')
         setDisableDocTitle(false)
     }
@@ -129,7 +129,6 @@ export const GenerateDoc = () => {
                 }),
                 LineBreak,
                 Assumptions,
-                LineBreak,
                 new Paragraph({
                     text: `Ticket is for ${draftType.includes('Web') ? draftType : `Mobile ${draftType}`}`,
                     bullet: {level: 0} //Max level is 9
@@ -146,24 +145,65 @@ export const GenerateDoc = () => {
                     text: "Values in the provided code",
                     bullet: {level: 0}
                 }),
-                new Paragraph({
-                    text: "If in quotes, indicate static values",
-                    bullet: {level: 1}
-                }),
-                new Paragraph({
-                    text: "If in double brackets, indicate dynamic values",
-                    bullet: {level: 1}
-                }),
-                new Paragraph({
-                    text: "If in quotes with a commented value, indicate possible static values",
-                    bullet: {level: 1}
-                }),
+                    new Paragraph({
+                        text: "If in quotes, indicate static values",
+                        bullet: {level: 1}
+                    }),
+                    new Paragraph({
+                        text: "If in double brackets, indicate dynamic values",
+                        bullet: {level: 1}
+                    }),
+                    new Paragraph({
+                        text: "If in quotes with a commented value, indicate possible static values",
+                        bullet: {level: 1}
+                    }),
                 LineBreak,
-                AcceptanceCriteria
+                AcceptanceCriteria,
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "SCENARIO 1:",
+                            bold: true,
+                        })
+                    ],
+                    spacing: {before: spacing, after: spacing}
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "ON:  ",
+                            bold: true
+                        }),
+                        new TextRun({
+                            text: " // SOME IMAGE WIL GO HERE //",
+                        })
+                    ]
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "WHEN:  ",
+                            bold: true,
+                        }),
+                        new TextRun({
+                            text: " A user interacts with the REORDER button",
+                        })
+                    ]
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "THEN:  ",
+                            bold: true,
+                        }),
+                        new TextRun({
+                            text: "  Push the following data layer code:",
+                        })
+                    ]
+                }),
             ]
         }
         setAllScopes(oldArray => [...oldArray, scope]);
-
     }
     
     const startPDF = () => {
@@ -212,7 +252,7 @@ export const GenerateDoc = () => {
                                     placeholder="Recent Orders Authenticated SA-999" 
                                     onChange={(e) => setDocTitle(e.target.value)} 
                                 />
-                                <Form.TextArea value={scopeTitle}
+                                <Form.Input value={scopeTitle}
                                     maxLength={45}
                                     required 
                                     className="input-labal" 
@@ -242,13 +282,7 @@ export const GenerateDoc = () => {
                                 <Message>
                                     <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
                                 </Message>
-                                {scopeNames.length>0 && <Message style={{overflowY: 'auto'}}>
-                                    <Message.List>
-                                        {scopeNames.map((scope, id) => {
-                                           return  <Message.Item>{`Scope ${id+1}:  ${scope}`}</Message.Item>
-                                        })}
-                                    </Message.List>
-                                </Message>}
+                                
                                 
                             </Grid.Column>
                             <Grid.Column width={8}>
@@ -295,7 +329,14 @@ export const GenerateDoc = () => {
                                     checked={draftType === 'Web'}
                                     onChange={selectDraftType}
                                 />
-                               
+                               {scopeNames.length>0 && <Message style={{overflowY: 'auto'}}>
+                                    <Message.List>
+                                        {scopeNames.map((scope, id) => {
+                                           return  <Message.Item>{`Scope ${id+1}:  ${scope}`}</Message.Item>
+                                        })}
+                                    </Message.List>
+                                </Message>}
+                                <br />
                             </Grid.Column>
                         </Grid.Row>    
                     </Grid>
