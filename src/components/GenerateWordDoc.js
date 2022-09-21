@@ -19,9 +19,12 @@ export const GenerateDoc = () => {
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
     const [disableDocTitle, setDisableDocTitle] = useState(false);
+    const [scopeMessage, setScopeMessage] = useState('Scope Added!')
 
     
     const resetStates = () => {
+        setAllScopes([])
+        setScopeNames([])
         setAsAnOwner('')
         setUserInteraction('')
         setUserMeasurement('')
@@ -29,10 +32,7 @@ export const GenerateDoc = () => {
         setClientName('')
         setDocTitle('')
         scopeTitle('')
-        setScopeNames('')
         setDraftType('Web')
-        setAllScopes([])
-        setScopeNames([])
         setDisableDocTitle(false)
     }
 
@@ -170,6 +170,7 @@ export const GenerateDoc = () => {
       if(allScopes.length === 0 || scopeNames.llength === 0){
         alert("Must submit at least 1 scope to generate a document")
       } else {
+
         const doc = new Document({
             sections: [
                 // TITLE SECTION
@@ -179,11 +180,12 @@ export const GenerateDoc = () => {
             ]
         });  
         
+        resetStates();
+        
         docx.Packer.toBlob(doc).then((blob) => {
         saveAs(blob, `${fileName.slice()}.docx`)
         });
 
-        resetStates()
 
       }
     }
@@ -195,7 +197,7 @@ export const GenerateDoc = () => {
     const form = () => {
         return(
             <Grid.Column style={{width:'70rem'}} className="inputForm" >
-                <Form onSubmit={startPDF}>
+                <Form onSubmit={checkForEmptyFields}>
                     <Grid columns={2}>
                         <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Word Document Generator!</h2></Grid.Row>
                         <Grid.Row>
@@ -210,15 +212,13 @@ export const GenerateDoc = () => {
                                     placeholder="Recent Orders Authenticated SA-999" 
                                     onChange={(e) => setDocTitle(e.target.value)} 
                                 />
-                                <Form.Input
-                                    value={scopeTitle}
+                                <Form.TextArea value={scopeTitle}
                                     maxLength={45}
                                     required 
                                     className="input-labal" 
-                                    label="Scope" 
+                                    label={`Scope ${scopeNames.length+1} name:` }
                                     placeholder="Scope Title" 
-                                    onChange={(e) => setScopeTitle(e.target.value)} 
-                                />
+                                    onChange={(e) => setScopeTitle(e.target.value)} />
                                 <Form.Input 
                                     value={clientName}
                                     maxLength={45}
@@ -300,14 +300,14 @@ export const GenerateDoc = () => {
                         </Grid.Row>    
                     </Grid>
                    
-                    <Button type="submit" style={{float:'right'}} >
+                    <Button type="button" style={{float:'right'}} onClick={startPDF} >
                         Generate {draftType.toUpperCase()} Word Document
                     </Button>
                     <Popup
-                        content={`"${scopeTitle}" scope added!`}
+                        content={scopeMessage}
                         on='click'
                         pinned
-                        trigger={<Button type="button" style={{float:'right'}} onClick={checkForEmptyFields} >
+                        trigger={<Button type="submit" style={{float:'right'}}  >
                         Add this scope
                     </Button>}
                     />
@@ -327,9 +327,11 @@ export const GenerateDoc = () => {
         scopeTitle && scopeTitle.trim() !== ''
 
         if(isValid){
+            setScopeMessage(`${scopeTitle} scope added!`)
             CreateScope()
+            setScopeTitle('')
         }else{
-            alert('All fields are required!')
+            setScopeMessage('Missing fields!')
         }
     }
 
