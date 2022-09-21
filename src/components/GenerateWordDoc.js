@@ -10,13 +10,13 @@ import {mobileText, webText} from '../components/Constants'
 
 export const GenerateDoc = () => {
     const spacing = 200;
-    const [asAnOwner, setAsAnOwner] = useState('test')
-    const [userInteraction, setUserInteraction] = useState('test')
-    const [userMeasurement, setUserMeasurement] = useState('test')
-    const [fileName, setFileName] = useState('test')
-    const [clientName, setClientName] = useState('test')
-    const [docTitle, setDocTitle] = useState('test')
-    const [scopeTitle, setScopeTitle] = useState('test')
+    const [asAnOwner, setAsAnOwner] = useState('')
+    const [userInteraction, setUserInteraction] = useState('')
+    const [userMeasurement, setUserMeasurement] = useState('')
+    const [fileName, setFileName] = useState('')
+    const [clientName, setClientName] = useState('')
+    const [docTitle, setDocTitle] = useState('')
+    const [scopeTitle, setScopeTitle] = useState('')
     const [draftType, setDraftType] = useState('Web')
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
