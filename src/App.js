@@ -1,5 +1,5 @@
 import React from "react";
-import GenerateDoc from './components/GenerateWordDoc'
+import {GenerateDoc} from './components/GenerateWordDoc'
 
 function App() {
   return <>

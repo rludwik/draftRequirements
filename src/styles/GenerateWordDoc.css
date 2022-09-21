@@ -1,5 +1,6 @@
 .container {
     margin-top: 10em;
+    
 }
 
 .inputs {
@@ -10,6 +11,7 @@
 .inputForm {
     background-color: rgb(242, 242, 242);
     padding: 30px;
+    height: 600px !important;
     border-radius: 10px;
     box-shadow: 1px 2px 12px -1px rgba(0,0,0,0.45);
     -webkit-box-shadow: 1px 2px 12px -1px rgba(0,0,0,0.45);
