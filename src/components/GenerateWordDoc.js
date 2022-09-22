@@ -1,16 +1,16 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
-import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType, Table, TableRow, TableCell, ShadingType, WidthType, convertInchesToTwip} from "docx";
+import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType, Table, TableRow, TableCell, ShadingType, WidthType, convertInchesToTwip, ImageRun} from "docx";
 import React from 'react';
-import {Button, Form, Grid, Message, Popup, Radio} from 'semantic-ui-react';
+import {Button, Divider, Form, Grid, Message, Popup, Radio, Header as SemanticHeader, Icon} from 'semantic-ui-react';
 import '../styles/GenerateWordDoc.css'
 
 import {mobileText, webText} from '../components/Constants'
+import ImageUploader from "./ImageUploader";
 
 export const GenerateDoc = () => {
-    const spacing = 200;
-    const [asAnOwner, setAsAnOwner] = useState('')
+    const [asAnOwner, setAsAnOwner] = useState('Business Owner')
     const [userInteraction, setUserInteraction] = useState('')
     const [userMeasurement, setUserMeasurement] = useState('')
     const [fileName, setFileName] = useState('')
@@ -21,14 +21,33 @@ export const GenerateDoc = () => {
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
     const [disableDocTitle, setDisableDocTitle] = useState(false);
-    const [scopeMessage, setScopeMessage] = useState('Scope Added!')
-    const [googleAnalytics, setGoogleAnalytics] = useState(true)
+    // const [scopeMessage, setScopeMessage] = useState('Missing Fields!')
+    const [googleAnalytics, setGoogleAnalytics] = useState(false)
     const [universalAnalytics, setUniversalAnalytics] = useState(false)
+    const [areChecked, setAreChecked] = useState(false)
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imageWidth, setImageWidth] = useState(300)
+    const [imageHeight, setImageHeight] = useState(350)
+    const [isValid, setIsValid] = useState(false)
+
+    const spacing = 200;
+    let aTable;
+    let googleOrUniversal;
+    let image;
+
+
+    useEffect(() => {
+        if(!googleAnalytics & !universalAnalytics){
+            setAreChecked(false)
+        } else {
+            setAreChecked(true)
+        }
+    },[googleAnalytics, universalAnalytics]);
 
     const resetStates = () => {
         setAllScopes([])
         setScopeNames([])
-        setAsAnOwner('')
+        setAsAnOwner('Business Owner')
         setUserInteraction('')
         setUserMeasurement('')
         setFileName('')
@@ -37,6 +56,9 @@ export const GenerateDoc = () => {
         setScopeTitle('')
         setDraftType('Web')
         setDisableDocTitle(false)
+        setSelectedImage(null)
+        setImageHeight(350)
+        setImageWidth(300)
     }
 
     const Title =  new Paragraph({
@@ -125,10 +147,6 @@ export const GenerateDoc = () => {
         right: convertInchesToTwip(0.05)
     }
 
-
-    let aTable;
-    let googleOrUniversal;
-
     if(googleAnalytics && !universalAnalytics){
         googleOrUniversal = [
             new Paragraph('   custom_parameter1: "{{<<DYNAMIC VALUE1>>}}",'),
@@ -211,7 +229,28 @@ export const GenerateDoc = () => {
         }
         })
     }
-    
+    if(selectedImage){
+        image = [
+            new TextRun({
+                text: "ON:  ",
+                bold: true
+            }),
+            new ImageRun({
+                data: selectedImage,
+                transformation: {
+                  width: imageWidth ? imageWidth : 300,
+                  height: imageHeight ? imageHeight : 400
+                }
+            })
+        ]
+    } else {
+        image = [
+            new TextRun({text: "ON:  ",bold: true}),
+            new TextRun({text: "   No image provided uploaded",})
+        ]
+    }
+
+
     const Scenario = [
         new Paragraph({
             children: [
@@ -223,15 +262,7 @@ export const GenerateDoc = () => {
             spacing: {before: spacing, after: spacing}
         }),
         new Paragraph({
-            children: [
-                new TextRun({
-                    text: "ON:  ",
-                    bold: true
-                }),
-                new TextRun({
-                    text: " // SOME IMAGE WIL GO HERE //",
-                })
-            ]
+            children: [...image],
         }),
         new Paragraph({
             children: [
@@ -318,11 +349,12 @@ export const GenerateDoc = () => {
                             text: draftType === 'Web' ? webText : mobileText,
                         })
                     ],
-                    spacing: {before: 400}
+                    spacing: {before: 400, after: 600}
                 })
             ]
         }
         setAllScopes(oldArray => [...oldArray, scope]);
+        setSelectedImage(null)
     }
     
     const startPDF = () => {
@@ -338,9 +370,7 @@ export const GenerateDoc = () => {
                 ...allScopes
             ]
         });  
-        
         resetStates();
-        
         docx.Packer.toBlob(doc).then((blob) => {
         saveAs(blob, `${fileName.slice()}.docx`)
         });
@@ -353,15 +383,22 @@ export const GenerateDoc = () => {
         setDraftType(data.value);
     }
 
-    const form = () => {
+    const InputForm = () => {
         return(
             <Grid.Column style={{width:'70rem'}} className="inputForm" >
                 <Form onSubmit={checkForEmptyFields}>
                     <Grid columns={2}>
                         <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Word Document Generator!</h2></Grid.Row>
+                        <Divider horizontal>
+                            <SemanticHeader as='h4'>
+                                <Icon name='file word' />
+                                {`File Name & Business Requirements`}
+                            </SemanticHeader>
+                        </Divider>
                         <Grid.Row>
+                            {/* UPPER LEFT COL */}
                             <Grid.Column width={8}>
-                            <Form.Input
+                                <Form.Input
                                     disabled={disableDocTitle}
                                     value={docTitle}
                                     maxLength={45}
@@ -396,16 +433,12 @@ export const GenerateDoc = () => {
                                     className="input-labal"
                                     value={fileName}
                                     onChange={(e, data) => (setFileName(data.value))}
-                                />
-                                
-                                <Message>
-                                    <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
-                                </Message>
-                                
-                                
+                                />                              
                             </Grid.Column>
+
+                            {/* UPPER RIGHT COL */}
                             <Grid.Column width={8}>
-                            <Form.Input 
+                                <Form.Input 
                                     value={asAnOwner}
                                     maxLength={30}
                                     required
@@ -433,63 +466,134 @@ export const GenerateDoc = () => {
                                     onChange={(e) => setUserInteraction(e.target.value)}
                                 />
                                 <br />
-                                <Grid columns={2}>
-                                <Grid.Row >
-                                    <Grid.Column width={3} >
-                                            <Radio
-                                            label='App'
-                                            name='radioGroup'
-                                            value='App'
-                                            checked={draftType === 'App'}
-                                            onChange={selectDraftType}
-                                        />
-                                        <br />
-                                        <Radio
-                                            label='Web'
-                                            name='radioGroup'
-                                            value='Web'
-                                            checked={draftType === 'Web'}
-                                            onChange={selectDraftType}
-                                        />
-                                    </Grid.Column>
-                                    <Grid.Column width={8}>
-                                        <Form.Checkbox
-                                            checked={googleAnalytics}
-                                            label={<label>Google Analytics 4</label>}
-                                            onClick={(e, data) => setGoogleAnalytics(data.checked)}
-                                        />
-                                        <Form.Checkbox
-                                            checked={universalAnalytics}
-                                            label={<label>Universal Analytics</label>}
-                                            onClick={(e, data) => setUniversalAnalytics(data.checked)}
-                                        />
-                                    </Grid.Column>
-                                </Grid.Row>
-                                </Grid>
-                               {scopeNames.length>0 && <Message style={{overflowY: 'auto'}}>
-                                    <Message.List>
-                                        {scopeNames.map((scope, id) => {
-                                           return  <Message.Item>{`Scope ${id+1}:  ${scope}`}</Message.Item>
-                                        })}
-                                    </Message.List>
-                                </Message>}
                                 <br />
+                                
+                                <Grid columns={2}>
+                                    <Grid.Row >
+                                        <Grid.Column width={3} >
+                                            <Radio
+                                                label='App'
+                                                name='radioGroup'
+                                                value='App'
+                                                checked={draftType === 'App'}
+                                                onChange={selectDraftType}
+                                            />
+                                            <br />
+                                            <Radio
+                                                label='Web'
+                                                name='radioGroup'
+                                                value='Web'
+                                                checked={draftType === 'Web'}
+                                                onChange={selectDraftType}
+                                            />
+                                        </Grid.Column>
+                                        <Grid.Column width={12}>
+                                            <Form.Checkbox
+                                                checked={googleAnalytics}
+                                                label={<label>Google Analytics 4</label>}
+                                                onClick={(e, data) => setGoogleAnalytics(data.checked)}
+                                                error={areChecked ? false:{
+                                                    content: 'Select one',
+                                                    pointing: 'left',
+                                                }}
+                                            />
+                                            <Form.Checkbox
+                                                checked={universalAnalytics}
+                                                label={<label>Universal Analytics</label>}
+                                                onClick={(e, data) => setUniversalAnalytics(data.checked)}
+                                                error={areChecked ? false:{
+                                                    content: 'Select one',
+                                                    pointing: 'left',
+                                                }}
+                                            />
+                                        </Grid.Column>
+                                    </Grid.Row>
+                                </Grid>
                             </Grid.Column>
-                        </Grid.Row>    
+                        </Grid.Row>   
+                        <Divider horizontal>
+                            <SemanticHeader as='h4'>
+                                <Icon name='image' />
+                                Select Image and add Scope
+                            </SemanticHeader>
+                        </Divider>
+                        <Grid.Row>
+                            {/* LOWER LEFT COL */}
+                            <Grid.Column>
+                                <div style={{backgroundColor: '#ccc', padding: '15px', borderRadius:'15px', textAlign:'center'}}>
+                                    <Form.Group style={{justifyContent: 'center'}}>
+                                        <Form.Input maxLength={3} style={{width: '70px'}} size="mini" label={'Width'} value={imageWidth} placeholder={'e.x. 300'} onChange={(e,data) => setImageWidth(data.value)}></Form.Input>
+                                        <Form.Input maxLength={3} style={{width: '70px'}} size="mini" label={'Height'} value={imageHeight} placeholder={'e.x. 350'} onChange={(e,data) => setImageHeight(data.value)}></Form.Input>
+                                    </Form.Group>
+                                    <label>Preivew shows 300px by 350px. Doc will use fields above</label>
+                                    <ImageUploader setSelectedImage={setSelectedImage} />
+                                    <br />
+                                    {selectedImage && <img width={300} height={350} style={{borderRadius:'15px'}} alt="not found"  src={selectedImage} />}
+                                </div>
+                                <label pointing>Then: Push the following data layer code</label>
+                                <br />
+                                
+                                <Message>
+                                    <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
+                                </Message> 
+                            </Grid.Column>
+
+                            {/* LOWER RIGHT COL */}
+                            <Grid.Column>
+                                <Grid stretched style={{height: '100%'}}>
+                                <Grid.Row stretched>
+                                        <Grid.Column>
+                                            <Message style={{overflowY: 'auto'}}>
+                                                <Message.Header> Scenarios you add to the document will appear here</Message.Header>
+                                                <Message.List>
+                                                    <Message.Item style={{color:'#999'}}>{"Scanerio 1: Some example scenario for button click"}</Message.Item>
+                                                    <Message.Item style={{color:'#999'}}>{"Scenario 2: Some other scenario for search field"}</Message.Item>
+                                                </Message.List>
+                                            </Message>
+                                        </Grid.Column>
+                                    </Grid.Row>
+                                    <Grid.Row stretched>
+                                        <Grid.Column>
+                                            {scopeNames.length>0 ?
+                                                <Message style={{overflowY: 'auto'}}>
+                                                    <Message.List>
+                                                        {scopeNames.map((scope, id) => {
+                                                        return  <Message.Item>{`Scope ${id+1}:  ${scope}`}</Message.Item>
+                                                        })}
+                                                    </Message.List>
+                                                </Message>
+                                            :
+                                                <Message style={{overflowY: 'auto'}}>
+                                                <Message.Header> Scopes you add to the document will appear here</Message.Header>
+                                                    <Message.List>
+                                                        <Message.Item style={{color:'#999'}}>{"Scope 1: Some example scope for button click"}</Message.Item>
+                                                        <Message.Item style={{color:'#999'}}>{"Scope 2: Some other scope for search field"}</Message.Item>
+                                                    </Message.List>
+                                                </Message>
+                                            }
+                                        </Grid.Column>
+                                    </Grid.Row>
+                                </Grid>
+                            </Grid.Column>
+                        </Grid.Row>
                     </Grid>
-                   
-                    <Button type="button" style={{float:'right'}} onClick={startPDF} >
+                    <br/>
+                    <Button color={'teal'} type="button" style={{float:'right'}} onClick={startPDF} >
                         Generate {draftType.toUpperCase()} Word Document
                     </Button>
-                    <Popup
-                        content={scopeMessage}
+                    <Button color={'blue'} type="submit" style={{float:'right'}}>Add this Scope</Button>
+                    {/* <Popup 
+                        content={!isValid ? 'Missing Fields!' : `${scopeTitle} scope added!` }
                         on='click'
                         pinned
-                        trigger={<Button type="submit" style={{float:'right'}}  >
-                        Add this scope
-                    </Button>}
+                        trigger={<Button color={'blue'} type="submit" style={{float:'right'}}>Add this scope</Button>}
+                    /> */}
+                    <Popup
+                        content={isValid ? 'Missing Fields!' : `${scopeTitle} scope added!` }
+                        on='click'
+                        pinned
+                        trigger={<Button disabled color={'green'}  type="submit" style={{float:'right'}}>{'Add this Scenario (coming soon)'}</Button>}
                     />
-                    
                 </Form>
             </Grid.Column>
         )
@@ -502,22 +606,25 @@ export const GenerateDoc = () => {
         fileName && fileName.trim() !== '' &&
         clientName && clientName.trim() !== '' &&
         docTitle && docTitle.trim() !== '' &&
-        scopeTitle && scopeTitle.trim() !== ''
-
+        scopeTitle && scopeTitle.trim() !== '' &&
+        (googleAnalytics || universalAnalytics)
+        
         if(isValid){
-            setScopeMessage(`${scopeTitle} scope added!`)
+            setIsValid(true)
+            // setScopeMessage(`${scopeTitle} scope added!`)
             CreateScope()
             setScopeTitle('')
-        }else{
-            setScopeMessage('Missing fields!')
+            setIsValid(true)
         }
     }
 
     return (
         <div className="container">
             <div className="inputs">
-                {form()}                
+                {InputForm()}              
             </div>
+            <br />
+            <br />
         </div>
     );
 }
