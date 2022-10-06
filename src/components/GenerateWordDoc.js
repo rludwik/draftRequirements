@@ -495,12 +495,15 @@ export const GenerateDoc = () => {
                                     <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
                                     <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>",`}</p>
                                     <p style={{margin: '0px'}}> {`})`}</p>
-                                    <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
                                 </Message>}
                             </Form.Group>
                             <Form.Group style={{margin: '15px'}}>
                                 <div style={{backgroundColor:'#ddd', width:'325px', height:'375px', borderRadius: '25px', padding: '13px'}}>
-                                    {selectedImage && <img width={300} height={350} style={{borderRadius:'15px'}} alt="not found"  src={selectedImage} />}
+                                    {selectedImage ?
+                                        <img width={300} height={350} style={{borderRadius:'15px'}} alt="not found"  src={selectedImage} />
+                                     :
+                                     <h3>Selected image will preview here</h3>
+                                     }
                                 </div>
                             </Form.Group>
                         </Grid.Row>
