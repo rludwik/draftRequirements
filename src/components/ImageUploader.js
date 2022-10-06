@@ -1,5 +1,5 @@
 import React from "react";
-import { Input, Button } from "semantic-ui-react";
+import { Button } from "semantic-ui-react";
 
 class ImageUploader extends React.Component {
   state = {
@@ -59,7 +59,6 @@ class ImageUploader extends React.Component {
           as="label" htmlFor="file" type="button"
         />
         <input type="file" id="file" style={{ display: "hidden" }} hidden onChange={this.handleFileInputChange} />
-        {/* <Input type="file" name="file" onChange={this.handleFileInputChange} /> */}
       </div>
     );
   }

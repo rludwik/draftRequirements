@@ -3,7 +3,7 @@ import * as docx from "docx";
 import { saveAs } from "file-saver";
 import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType, Table, TableRow, TableCell, ShadingType, WidthType, convertInchesToTwip, ImageRun} from "docx";
 import React from 'react';
-import {Button, Form, Grid, Message, Checkbox, Radio} from 'semantic-ui-react';
+import {Button, Form, Grid, Message, Radio} from 'semantic-ui-react';
 import '../styles/GenerateWordDoc.css'
 
 import CustomDivider from '../components/Divider'
