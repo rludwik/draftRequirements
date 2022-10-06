@@ -12,7 +12,7 @@ import ImageUploader from "./ImageUploader";
 
 
 export const GenerateDoc = () => {
-    const defaultString = 'test';
+    const defaultString = '';
     const [newImage, setNewImage] = useState(false)
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
