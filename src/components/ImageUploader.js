@@ -1,5 +1,5 @@
 import React from "react";
-import { Input } from "semantic-ui-react";
+import { Input, Button } from "semantic-ui-react";
 
 class ImageUploader extends React.Component {
   state = {
@@ -27,6 +27,7 @@ class ImageUploader extends React.Component {
   };
 
   handleFileInputChange = e => {
+    this.props.setNewImage(true)
     let { file } = this.state;
 
     file = e.target.files[0];
@@ -51,7 +52,14 @@ class ImageUploader extends React.Component {
   render() {
     return (
       <div>
-        <Input type="file" name="file" onChange={this.handleFileInputChange} />
+        <Button
+          content="Upload image for this scenario"
+          labelPosition="left"
+          icon="file"
+          as="label" htmlFor="file" type="button"
+        />
+        <input type="file" id="file" style={{ display: "hidden" }} hidden onChange={this.handleFileInputChange} />
+        {/* <Input type="file" name="file" onChange={this.handleFileInputChange} /> */}
       </div>
     );
   }

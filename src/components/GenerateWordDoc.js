@@ -1,40 +1,47 @@
-import {useEffect, useState} from "react";
+import {useState, useEffect} from "react";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
 import { HeadingLevel, Paragraph, Document, TextRun, AlignmentType, SectionType, UnderlineType, Table, TableRow, TableCell, ShadingType, WidthType, convertInchesToTwip, ImageRun} from "docx";
 import React from 'react';
-import {Button, Divider, Form, Grid, Message, Popup, Radio, Header as SemanticHeader, Icon} from 'semantic-ui-react';
+import {Button, Form, Grid, Message, Checkbox, Radio} from 'semantic-ui-react';
 import '../styles/GenerateWordDoc.css'
 
+import CustomDivider from '../components/Divider'
 import {mobileText, webText} from '../components/Constants'
 import ImageUploader from "./ImageUploader";
 
+
 export const GenerateDoc = () => {
-    const [asAnOwner, setAsAnOwner] = useState('Business Owner')
-    const [userInteraction, setUserInteraction] = useState('')
-    const [userMeasurement, setUserMeasurement] = useState('')
-    const [fileName, setFileName] = useState('')
-    const [clientName, setClientName] = useState('')
-    const [docTitle, setDocTitle] = useState('')
-    const [scopeTitle, setScopeTitle] = useState('')
-    const [draftType, setDraftType] = useState('Web')
+    const defaultString = 'test';
+    const [newImage, setNewImage] = useState(false)
     const [allScopes, setAllScopes] = useState([]);
     const [scopeNames, setScopeNames] = useState([]);
-    const [disableDocTitle, setDisableDocTitle] = useState(false);
-    // const [scopeMessage, setScopeMessage] = useState('Missing Fields!')
-    const [googleAnalytics, setGoogleAnalytics] = useState(false)
-    const [universalAnalytics, setUniversalAnalytics] = useState(false)
-    const [areChecked, setAreChecked] = useState(false)
+    const [draftType, setDraftType] = useState('Web');
+    const [imageWidth, setImageWidth] = useState(300);
+    const [areChecked, setAreChecked] = useState(false);
+    const [imageHeight, setImageHeight] = useState(350);
+    const [allScenarios, setAllScenarios] = useState([]);
+    const [scenarioCount, setScenarioCount] = useState(1);
+    const [onInput, setOnInput] = useState(defaultString);
+    const [fileName, setFileName] = useState(defaultString);
+    const [docTitle, setDocTitle] = useState(defaultString);
     const [selectedImage, setSelectedImage] = useState(null);
-    const [imageWidth, setImageWidth] = useState(300)
-    const [imageHeight, setImageHeight] = useState(350)
-    const [isValid, setIsValid] = useState(false)
-
+    const [whenInput, setWhenInput] = useState(defaultString);
+    const [clientName, setClientName] = useState(defaultString);
+    const [scopeTitle, setScopeTitle] = useState(defaultString);
+    const [asAnOwner, setAsAnOwner] = useState('Business Owner');
+    const [googleAnalytics, setGoogleAnalytics] = useState(false);
+    const [disableDocTitle, setDisableDocTitle] = useState(false);
+    const [universalAnalytics, setUniversalAnalytics] = useState(false);
+    const [scopeButtonDisabled, setScopeButtonDisabled] = useState(true);
+    const [userInteraction, setUserInteraction] = useState(defaultString);
+    const [userMeasurement, setUserMeasurement] = useState(defaultString);
+    const [submitButtonDisabled, setSubmitButtonDisabled] = useState(true);
+    
     const spacing = 200;
     let aTable;
     let googleOrUniversal;
     let image;
-
 
     useEffect(() => {
         if(!googleAnalytics & !universalAnalytics){
@@ -43,7 +50,6 @@ export const GenerateDoc = () => {
             setAreChecked(true)
         }
     },[googleAnalytics, universalAnalytics]);
-
     const resetStates = () => {
         setAllScopes([])
         setScopeNames([])
@@ -59,6 +65,9 @@ export const GenerateDoc = () => {
         setSelectedImage(null)
         setImageHeight(350)
         setImageWidth(300)
+        setScopeButtonDisabled(true)
+        setScopeButtonDisabled(true)
+        setNewImage(false)
     }
 
     const Title =  new Paragraph({
@@ -75,6 +84,45 @@ export const GenerateDoc = () => {
     
         ],
     })
+
+    const Conditions = [
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "AS A:  ",
+                    bold: true,
+                }),
+                new TextRun({
+                    text: asAnOwner,
+                }),
+            ],
+            spacing: {before: spacing}
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "I WANT TO: ",
+                    bold: true,
+                }),
+                new TextRun({
+                    text: `${userMeasurement}`,
+                }),
+            ],
+            spacing: {before: spacing}
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({
+                    text: "SO THAT:  ",
+                    bold: true,
+                }),
+                new TextRun({
+                    text: `${userInteraction}`,
+                }),
+            ],
+            spacing: {before: spacing},
+        })
+    ]
 
     const Header = new Paragraph({
         text: `Scope: ${draftType} - ${scopeTitle}`,
@@ -147,6 +195,19 @@ export const GenerateDoc = () => {
         right: convertInchesToTwip(0.05)
     }
 
+    const References = new Paragraph({
+        children: [
+            new TextRun({
+                text: "References:  ",
+                bold: true,
+            }),
+            new TextRun({
+                text: draftType === 'Web' ? webText : mobileText,
+            })
+        ],
+        spacing: {before: 400, after: 600}
+    })
+
     if(googleAnalytics && !universalAnalytics){
         googleOrUniversal = [
             new Paragraph('   custom_parameter1: "{{<<DYNAMIC VALUE1>>}}",'),
@@ -218,7 +279,7 @@ export const GenerateDoc = () => {
                             new Paragraph('mFirebaseAnalytics.logEvent("<<EVENT NAME>>", { '),
                             ...googleOrUniversal,
                             new Paragraph('}); ')
-                    ]
+                        ]
                     })
                 ],
             }),
@@ -229,12 +290,9 @@ export const GenerateDoc = () => {
         }
         })
     }
-    if(selectedImage){
+
+    if(selectedImage && newImage){
         image = [
-            new TextRun({
-                text: "ON:  ",
-                bold: true
-            }),
             new ImageRun({
                 data: selectedImage,
                 transformation: {
@@ -245,138 +303,131 @@ export const GenerateDoc = () => {
         ]
     } else {
         image = [
-            new TextRun({text: "ON:  ",bold: true}),
-            new TextRun({text: "   No image provided uploaded",})
+            new TextRun({text: "   --- No image provided ---",})
         ]
     }
 
-
-    const Scenario = [
-        new Paragraph({
-            children: [
-                new TextRun({
-                    text: "SCENARIO:",
-                    bold: true,
-                })
-            ],
-            spacing: {before: spacing, after: spacing}
-        }),
-        new Paragraph({
-            children: [...image],
-        }),
-        new Paragraph({
-            children: [
-                new TextRun({
-                    text: "WHEN:  ",
-                    bold: true,
-                }),
-                new TextRun({
-                    text: " A user interacts with the REORDER button",
-                })
-            ]
-        }),
-        new Paragraph({
-            children: [
-                new TextRun({
-                    text: "THEN:  ",
-                    bold: true,
-                }),
-                new TextRun({
-                    text: "  Push the following data layer code:",
-                })
-            ],
-            spacing: {after: spacing},
-        }),
-        aTable   
-    ]   
-
     const CreateScope = () => {
-        setDisableDocTitle(true)
         setScopeNames(oldArray => [...oldArray, scopeTitle]);
         const scope = {
             properties: {type: SectionType.CONTINUOUS},
             children: [
                 Header,
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "AS A:  ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: asAnOwner,
-                        }),
-                    ],
-                    spacing: {before: spacing}
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "I WANT TO: ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: `Measure engagement with ${userMeasurement}`,
-                        }),
-                    ],
-                    spacing: {before: spacing}
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "SO THAT:  ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: `I can understand user's interaction with ${userInteraction}`,
-                        }),
-                    ],
-                    spacing: {before: spacing},
-                }),
+                ...Conditions,
                 LineBreak,
                 Assumptions,
                 ...BulletPoints,
                 LineBreak,
                 AcceptanceCriteria,
-                ...Scenario,
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: "References:  ",
-                            bold: true,
-                        }),
-                        new TextRun({
-                            text: draftType === 'Web' ? webText : mobileText,
-                        })
-                    ],
-                    spacing: {before: 400, after: 600}
-                })
+                ...allScenarios,
+                References
             ]
         }
         setAllScopes(oldArray => [...oldArray, scope]);
         setSelectedImage(null)
+        setNewImage(false)
+        setAllScenarios([])
+    }
+
+    const CreateScenario = () => {
+        let isValid =  docTitle && docTitle.trim() !== '' &&
+        clientName && clientName.trim() !== '' &&
+        fileName && fileName.trim() !== '' &&
+        scopeTitle && scopeTitle.trim() !== '' &&
+        asAnOwner && asAnOwner.trim() !== '' &&
+        userInteraction && userInteraction.trim() !== '' &&
+        userMeasurement && userMeasurement.trim() !== '' &&
+        onInput && onInput.trim() !== '' &&
+        whenInput && whenInput.trim() !== '' && (googleAnalytics || universalAnalytics);
+
+        if(isValid){
+            const scenario = [
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `SCENARIO ${scenarioCount}:`,
+                            bold: true,
+                        })
+                    ],
+                    spacing: {after: spacing}
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "ON:  ",
+                            bold: true,
+                        }),
+                        new TextRun({
+                            text: onInput,
+                        }),
+                    ],
+                    spacing: {before: spacing}
+                }),
+                new Paragraph({
+                    children: [...image],
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "When:  ",
+                            bold: true,
+                        }),
+                        new TextRun({
+                            text: whenInput,
+                            }),
+                    ],
+                    spacing: {before: spacing}
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "Then push the following data layer code:",
+                        })
+                    ],
+                    spacing: {before: spacing}
+                }),
+                aTable,
+                new Paragraph({
+                    spacing: {after: 400}
+                }),
+            ]
+            setOnInput(defaultString)
+            setWhenInput(defaultString)
+            setGoogleAnalytics(false)
+            setUniversalAnalytics(false)
+            setScenarioCount(scenarioCount + 1)
+            setScopeButtonDisabled(false)
+            setDisableDocTitle(true)
+            setAllScenarios(oldArray => [...oldArray, ...scenario])
+            alert(`Scenario ${scenarioCount} added to Scope ${scopeNames.length +1}`)
+            setSelectedImage(null)
+            setNewImage(false)
+        } else {
+            alert('Some fields are still empty!')
+        }
+        
     }
     
     const startPDF = () => {
-      if(allScopes.length === 0 || scopeNames.llength === 0){
-        alert("Must submit at least 1 scope to generate a document")
-      } else {
-
-        const doc = new Document({
-            sections: [
-                // TITLE SECTION
-                DocumentTitle,
-                // MAIN BODY SECTION
-                ...allScopes
-            ]
-        });  
-        resetStates();
-        docx.Packer.toBlob(doc).then((blob) => {
-        saveAs(blob, `${fileName.slice()}.docx`)
-        });
-
-
-      }
+        if(allScopes.length === 0 || scopeNames.llength === 0){
+          alert("Must submit at least 1 scope to generate a document")
+        } else {
+          const doc = new Document({
+              sections: [
+                  // TITLE SECTION
+                  DocumentTitle,
+                  // MAIN BODY SECTION
+                  ...allScopes
+              ]
+          });  
+          resetStates();
+          docx.Packer.toBlob(doc).then((blob) => {
+          saveAs(blob, `${fileName.slice()}.docx`)
+          });
+          setTimeout(() => {
+            window.location.reload(false);
+          }, "2000")
+        }
     }
 
     const selectDraftType = (e, data) => {
@@ -385,236 +436,109 @@ export const GenerateDoc = () => {
 
     const InputForm = () => {
         return(
-            <Grid.Column style={{width:'70rem'}} className="inputForm" >
-                <Form onSubmit={checkForEmptyFields}>
-                    <Grid columns={2}>
+            <Grid.Column style={{width: '70em', maxWidth:'80%'}} className="inputForm" >
+                <Form onSubmit={CreateScenario}>
+                    <Grid>
                         <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Word Document Generator!</h2></Grid.Row>
-                        <Divider horizontal>
-                            <SemanticHeader as='h4'>
-                                <Icon name='file word' />
-                                {`File Name & Business Requirements`}
-                            </SemanticHeader>
-                        </Divider>
-                        <Grid.Row>
-                            {/* UPPER LEFT COL */}
-                            <Grid.Column width={8}>
-                                <Form.Input
-                                    disabled={disableDocTitle}
-                                    value={docTitle}
-                                    maxLength={45}
-                                    required 
-                                    className="input-labal" 
-                                    label="Word Document Title" 
-                                    placeholder="Recent Orders Authenticated SA-999" 
-                                    onChange={(e) => setDocTitle(e.target.value)} 
-                                />
-                                <Form.Input value={scopeTitle}
-                                    maxLength={45}
-                                    required 
-                                    className="input-labal" 
-                                    label={`Scope ${scopeNames.length+1} name:` }
-                                    placeholder="Scope Title" 
-                                    onChange={(e) => setScopeTitle(e.target.value)} />
-                                <Form.Input 
-                                    value={clientName}
-                                    maxLength={45}
-                                    required
-                                    className="input-labal" 
-                                    label="Client" 
-                                    placeholder="Arby's, UHC, etc." 
-                                    onChange={(e) => setClientName(e.target.value)}
-                                />
-                                <Form.Input
-                                    maxLength={50}
-                                    required
-                                    label={fileName.length === 0 ? "Desired File Name" : `File: "${fileName}.docx"`}
-                                    labelPosition='right'
-                                    placeholder='Enter desired file name'
-                                    className="input-labal"
-                                    value={fileName}
-                                    onChange={(e, data) => (setFileName(data.value))}
-                                />                              
-                            </Grid.Column>
+                        <CustomDivider icon={'file word'} title={'File and Client Information'} />
+                        <Grid.Row style={{justifyContent: 'center', marginBottom: '3rem'}}>
+                            <Form.Group widths={'equal'}>
+                                <Form.Input disabled={disableDocTitle} value={docTitle} maxLength={45} required className="input-labal" label="Word Document Title" placeholder="Recent Orders Authenticated SA-999" onChange={(e) => setDocTitle(e.target.value)} />
+                                <Form.Input disabled={disableDocTitle} value={clientName} maxLength={45} required className="input-labal" label="Client" placeholder="Arby's, UHC, etc." onChange={(e) => setClientName(e.target.value)}/>
+                                <Form.Input disabled={disableDocTitle} maxLength={50} required label={fileName.length === 0 ? "Desired File Name" : `File: "${fileName}.docx"`} labelPosition='right' placeholder='Enter desired file name' className="input-labal" value={fileName} onChange={(e, data) => (setFileName(data.value))} />                              
+                            </Form.Group>
+                            <Form.Group grouped style={{paddingLeft: '1rem'}}>
+                            <label>Platform Type</label>
+                            <Form.Field disabled={disableDocTitle} control={Radio} label='App' value='App' checked={draftType === 'App'} onChange={selectDraftType} />
+                            <Form.Field disabled={disableDocTitle} control={Radio} label='Web' value='Web' checked={draftType === 'Web'} onChange={selectDraftType} />
+                            </Form.Group>
+                        </Grid.Row>
+                        <CustomDivider title={`Business Requirements for Scope ${scopeNames.length+1} `} />
+                        <Grid.Row style={{justifyContent: 'center', marginBottom: '3rem'}}>
+                            <Form.Group widths={'equal'}>
+                                <Form.Input value={scopeTitle} maxLength={45} required className="input-labal" label={`Scope ${scopeNames.length+1} name:` } placeholder="Scope Title" onChange={(e) => setScopeTitle(e.target.value)} />
+                                <Form.Input placeholder="Business Owner" value={asAnOwner} maxLength={45} required className="input-labal" label="As a:" onChange={(e) => setAsAnOwner(e.target.value)} />
+                                <Form.Input label="I Want to:" value={userMeasurement} maxLength={100} required className="input-labal" placeholder='"measure Engagement with the reorder button on the orders screen"' onChange={(e) => setUserMeasurement(e.target.value)} />
+                                <Form.Input label="So that I can:" value={userInteraction} maxLength={100} required className="input-labal" placeholder='"measure user interaction with the reorder button on the orders screen"' onChange={(e) => setUserInteraction(e.target.value)} />
+                            </Form.Group>
+                        </Grid.Row>
 
-                            {/* UPPER RIGHT COL */}
-                            <Grid.Column width={8}>
-                                <Form.Input 
-                                    value={asAnOwner}
-                                    maxLength={30}
-                                    required
-                                    className="input-labal" 
-                                    label="As a:" 
-                                    placeholder="Business Owner" 
-                                    onChange={(e) => setAsAnOwner(e.target.value)}
-                                />
-                                <Form.Input 
-                                    value={userMeasurement}
-                                    maxLength={45}
-                                    required
-                                    className="input-labal" 
-                                    label="I Want to Measure Engagement with:" 
-                                    placeholder='"The reorder button on the orders screen"' 
-                                    onChange={(e) => setUserMeasurement(e.target.value)}
-                                />
-                                <Form.Input 
-                                    value={userInteraction}
-                                    maxLength={45}
-                                    required
-                                    className="input-labal" 
-                                    label="So that I can understand user interaction with:" 
-                                    placeholder='"The reorder button on the orders screen"' 
-                                    onChange={(e) => setUserInteraction(e.target.value)}
-                                />
-                                <br />
-                                <br />
-                                
-                                <Grid columns={2}>
-                                    <Grid.Row >
-                                        <Grid.Column width={3} >
-                                            <Radio
-                                                label='App'
-                                                name='radioGroup'
-                                                value='App'
-                                                checked={draftType === 'App'}
-                                                onChange={selectDraftType}
-                                            />
-                                            <br />
-                                            <Radio
-                                                label='Web'
-                                                name='radioGroup'
-                                                value='Web'
-                                                checked={draftType === 'Web'}
-                                                onChange={selectDraftType}
-                                            />
-                                        </Grid.Column>
-                                        <Grid.Column width={12}>
-                                            <Form.Checkbox
-                                                checked={googleAnalytics}
-                                                label={<label>Google Analytics 4</label>}
-                                                onClick={(e, data) => setGoogleAnalytics(data.checked)}
-                                                error={areChecked ? false:{
-                                                    content: 'Select one',
-                                                    pointing: 'left',
-                                                }}
-                                            />
-                                            <Form.Checkbox
-                                                checked={universalAnalytics}
-                                                label={<label>Universal Analytics</label>}
-                                                onClick={(e, data) => setUniversalAnalytics(data.checked)}
-                                                error={areChecked ? false:{
-                                                    content: 'Select one',
-                                                    pointing: 'left',
-                                                }}
-                                            />
-                                        </Grid.Column>
-                                    </Grid.Row>
-                                </Grid>
-                            </Grid.Column>
-                        </Grid.Row>   
-                        <Divider horizontal>
-                            <SemanticHeader as='h4'>
-                                <Icon name='image' />
-                                Select Image and add Scope
-                            </SemanticHeader>
-                        </Divider>
-                        <Grid.Row>
-                            {/* LOWER LEFT COL */}
-                            <Grid.Column>
-                                <div style={{backgroundColor: '#ccc', padding: '15px', borderRadius:'15px', textAlign:'center'}}>
-                                    <Form.Group style={{justifyContent: 'center'}}>
-                                        <Form.Input maxLength={3} style={{width: '70px'}} size="mini" label={'Width'} value={imageWidth} placeholder={'e.x. 300'} onChange={(e,data) => setImageWidth(data.value)}></Form.Input>
-                                        <Form.Input maxLength={3} style={{width: '70px'}} size="mini" label={'Height'} value={imageHeight} placeholder={'e.x. 350'} onChange={(e,data) => setImageHeight(data.value)}></Form.Input>
-                                    </Form.Group>
-                                    <label>Preivew shows 300px by 350px. Doc will use fields above</label>
-                                    <ImageUploader setSelectedImage={setSelectedImage} />
-                                    <br />
+                        <CustomDivider icon={'image'} title={`Select Image and info for Scope ${scopeNames.length+1} - Scenario ${scenarioCount}`} />
+                        <Grid.Row style={{justifyContent: 'center'}}>
+                            <Form.Group style={{margin: '15px'}} grouped>
+                                    <ImageUploader setSelectedImage={setSelectedImage} setNewImage={setNewImage}/>
+                                    <Form.Input label="ON:" placeholder='the home page' value={onInput} maxLength={45} required className="input-labal" onChange={(e) => setOnInput(e.target.value)} />
+                                    <Form.Input label="WHEN:" placeholder='a user clicks the order button' value={whenInput} maxLength={100} required className="input-labal" onChange={(e) => setWhenInput(e.target.value)} />
+                                    <label>THEN: Push the folowing data layer code</label>
+                                    <Form.Checkbox checked={googleAnalytics} label={<label>Google Analytics 4</label>}onClick={(e, data) => setGoogleAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
+                                    <Form.Checkbox checked={universalAnalytics} label={<label>Universal Analytics</label>} onClick={(e, data) => setUniversalAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
+                                    
+                                    {draftType === "Web" && <Message>
+                                    <p style={{margin: '0px'}}> {`dataLayer.push({`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`event_name: "<<EVENT NAME>>",`}</p>
+                                    { universalAnalytics && <>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "<<CATEGORY>>",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "<<ACTION>>",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "<<LABEL>>",`}</p>
+                                    </>}
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>"`}</p>
+                                    <p style={{margin: '0px'}}> {`})`}</p>
+                                </Message>}
+                                {draftType === "App" &&<Message>
+                                    <p style={{margin: '0px'}}> {`mFirebaseAnalytics.logEvent("<<EVENT NAME>>", {`}</p>
+                                    { universalAnalytics && <>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "<<CATEGORY>>",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "<<ACTION>>",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "<<LABEL>>",`}</p>
+                                    </>}
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>",`}</p>
+                                    <p style={{margin: '0px'}}> {`})`}</p>
+                                    <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
+                                </Message>}
+                            </Form.Group>
+                            <Form.Group style={{margin: '15px'}}>
+                                <div style={{backgroundColor:'#ddd', width:'325px', height:'375px', borderRadius: '25px', padding: '13px'}}>
                                     {selectedImage && <img width={300} height={350} style={{borderRadius:'15px'}} alt="not found"  src={selectedImage} />}
                                 </div>
-                                <label pointing>Then: Push the following data layer code</label>
-                                <br />
-                                
-                                <Message>
-                                    <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
-                                </Message> 
-                            </Grid.Column>
-
-                            {/* LOWER RIGHT COL */}
-                            <Grid.Column>
-                                <Grid stretched style={{height: '100%'}}>
-                                <Grid.Row stretched>
-                                        <Grid.Column>
-                                            <Message style={{overflowY: 'auto'}}>
-                                                <Message.Header> Scenarios you add to the document will appear here</Message.Header>
-                                                <Message.List>
-                                                    <Message.Item style={{color:'#999'}}>{"Scanerio 1: Some example scenario for button click"}</Message.Item>
-                                                    <Message.Item style={{color:'#999'}}>{"Scenario 2: Some other scenario for search field"}</Message.Item>
-                                                </Message.List>
-                                            </Message>
-                                        </Grid.Column>
-                                    </Grid.Row>
-                                    <Grid.Row stretched>
-                                        <Grid.Column>
-                                            {scopeNames.length>0 ?
-                                                <Message style={{overflowY: 'auto'}}>
-                                                    <Message.List>
-                                                        {scopeNames.map((scope, id) => {
-                                                        return  <Message.Item>{`Scope ${id+1}:  ${scope}`}</Message.Item>
-                                                        })}
-                                                    </Message.List>
-                                                </Message>
-                                            :
-                                                <Message style={{overflowY: 'auto'}}>
-                                                <Message.Header> Scopes you add to the document will appear here</Message.Header>
-                                                    <Message.List>
-                                                        <Message.Item style={{color:'#999'}}>{"Scope 1: Some example scope for button click"}</Message.Item>
-                                                        <Message.Item style={{color:'#999'}}>{"Scope 2: Some other scope for search field"}</Message.Item>
-                                                    </Message.List>
-                                                </Message>
-                                            }
-                                        </Grid.Column>
-                                    </Grid.Row>
-                                </Grid>
-                            </Grid.Column>
+                            </Form.Group>
                         </Grid.Row>
                     </Grid>
-                    <br/>
-                    <Button color={'teal'} type="button" style={{float:'right'}} onClick={startPDF} >
+                    <br/>   
+                    <Button onClick={CreateScenario} color={'green'}  type="button" >{`Add Scenario ${scenarioCount} ${newImage ? '': 'WITHOUT AN IMAGE'}` }</Button>
+                    <label></label>
+                </Form>
+                <br />
+                <br />
+                <Button disabled={scopeButtonDisabled} color={'blue'} type="button"  onClick={checkForEmptyFields}>{`Add Scope ${scopeNames.length+1} with ${scenarioCount-1} scenarios`}</Button>
+                <Message>
+                <p> You currrently have <strong>{scopeNames.length}</strong> scopes in this document</p>
+                </Message>
+                <Button disabled={submitButtonDisabled} style={{float:'right'}} color={'teal'} type="button"  onClick={startPDF} >
                         Generate {draftType.toUpperCase()} Word Document
                     </Button>
-                    <Button color={'blue'} type="submit" style={{float:'right'}}>Add this Scope</Button>
-                    {/* <Popup 
-                        content={!isValid ? 'Missing Fields!' : `${scopeTitle} scope added!` }
-                        on='click'
-                        pinned
-                        trigger={<Button color={'blue'} type="submit" style={{float:'right'}}>Add this scope</Button>}
-                    /> */}
-                    <Popup
-                        content={isValid ? 'Missing Fields!' : `${scopeTitle} scope added!` }
-                        on='click'
-                        pinned
-                        trigger={<Button disabled color={'green'}  type="submit" style={{float:'right'}}>{'Add this Scenario (coming soon)'}</Button>}
-                    />
-                </Form>
+                    
             </Grid.Column>
         )
     }
 
     const checkForEmptyFields = () => {
-        let isValid = asAnOwner && asAnOwner.trim() !== '' &&
-        userInteraction && userInteraction.trim() !== '' &&
-        userMeasurement && userMeasurement.trim() !== '' &&
-        fileName && fileName.trim() !== '' &&
+        let isValid =  docTitle && docTitle.trim() !== '' &&
         clientName && clientName.trim() !== '' &&
-        docTitle && docTitle.trim() !== '' &&
+        fileName && fileName.trim() !== '' &&
         scopeTitle && scopeTitle.trim() !== '' &&
-        (googleAnalytics || universalAnalytics)
-        
+        asAnOwner && asAnOwner.trim() !== '' &&
+        userInteraction && userInteraction.trim() !== '' &&
+        userMeasurement && userMeasurement.trim() !== ''
+
         if(isValid){
-            setIsValid(true)
-            // setScopeMessage(`${scopeTitle} scope added!`)
+            setScenarioCount(1)
+            setSubmitButtonDisabled(false)
             CreateScope()
             setScopeTitle('')
-            setIsValid(true)
+        } else {
+            alert('Some fields are still empty!')
         }
     }
 
