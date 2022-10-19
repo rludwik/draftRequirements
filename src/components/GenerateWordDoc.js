@@ -10,7 +10,6 @@ import CustomDivider from '../components/Divider'
 import {mobileText, webText} from '../components/Constants'
 import ImageUploader from "./ImageUploader";
 
-
 export const GenerateDoc = () => {
     const defaultString = '';
     const [newImage, setNewImage] = useState(false)
@@ -37,6 +36,10 @@ export const GenerateDoc = () => {
     const [userInteraction, setUserInteraction] = useState(defaultString);
     const [userMeasurement, setUserMeasurement] = useState(defaultString);
     const [submitButtonDisabled, setSubmitButtonDisabled] = useState(true);
+    const [eventName, setEventName] = useState('');
+    const [eventLabel, setEventLabel] = useState('');
+    const [eventAction, setEventAction] = useState('');
+    const [eventCategory, setEventCategory] = useState('');
     
     const spacing = 200;
     let aTable;
@@ -50,6 +53,7 @@ export const GenerateDoc = () => {
             setAreChecked(true)
         }
     },[googleAnalytics, universalAnalytics]);
+
     const resetStates = () => {
         setAllScopes([])
         setScopeNames([])
@@ -68,6 +72,10 @@ export const GenerateDoc = () => {
         setScopeButtonDisabled(true)
         setScopeButtonDisabled(true)
         setNewImage(false)
+        setEventName('')
+        setEventLabel('')
+        setEventAction('')
+        setEventCategory('')
     }
 
     const Title =  new Paragraph({
@@ -92,9 +100,7 @@ export const GenerateDoc = () => {
                     text: "AS A:  ",
                     bold: true,
                 }),
-                new TextRun({
-                    text: asAnOwner,
-                }),
+                new TextRun({text: asAnOwner,}),
             ],
             spacing: {before: spacing}
         }),
@@ -104,9 +110,7 @@ export const GenerateDoc = () => {
                     text: "I WANT TO: ",
                     bold: true,
                 }),
-                new TextRun({
-                    text: `${userMeasurement}`,
-                }),
+                new TextRun({text: `${userMeasurement}`})
             ],
             spacing: {before: spacing}
         }),
@@ -116,9 +120,7 @@ export const GenerateDoc = () => {
                     text: "SO THAT:  ",
                     bold: true,
                 }),
-                new TextRun({
-                    text: `${userInteraction}`,
-                }),
+                new TextRun({text: `${userInteraction}`})
             ],
             spacing: {before: spacing},
         })
@@ -216,24 +218,22 @@ export const GenerateDoc = () => {
         ]
     } else if(universalAnalytics && !googleAnalytics){
         googleOrUniversal = [
-            new Paragraph('   event_category: "<<CATEGORY>>",'),
-            new Paragraph('   event_action: "<<ACTION>>"'),
-            new Paragraph('   event_label: "<<LABEL>>'),
+            new Paragraph(`   event_category: "${eventCategory ? eventCategory : '<<static event category>>'}",`),
+            new Paragraph(`   event_action: "${eventAction ? eventAction : '<<static event action>>'}"`),
+            new Paragraph(`   event_label: "${eventLabel ? eventLabel : '<<static event label>>'}`)
         ]
         
     } else if(universalAnalytics && googleAnalytics) {
         googleOrUniversal = [
-            new Paragraph('   event_category: "<<CATEGORY>>",'),
-            new Paragraph('   event_action: "<<ACTION>>"'),
-            new Paragraph('   event_label: "<<LABEL>>'),
+            new Paragraph(`   event_category: "${eventCategory ? eventCategory : '<<static event category>>'}",`),
+            new Paragraph(`   event_action: "${eventAction ? eventAction : '<<static event action>>'}"`),
+            new Paragraph(`   event_label: "${eventLabel ? eventLabel : '<<static event label>>'}`),
             new Paragraph('   custom_parameter1: "{{<<DYNAMIC VALUE1>>}}",'),
             new Paragraph('   custom_parameter2: "<<STATIC VALUE2>>",'),
             new Paragraph('   custom_parameter3: "<<STATIC VALUE3>>" // or <<ALTERNATE STATIC VALUE3>>')
         ]
     } else {
-        googleOrUniversal = [
-            new Paragraph('    PLEASE SELECT GOOGLE OR UNIVERSAL BOX FROM THE FORM!')
-        ]
+        googleOrUniversal = [new Paragraph('    PLEASE SELECT GOOGLE OR UNIVERSAL BOX FROM THE FORM!')]
     }
 
     if(draftType === 'Web'){
@@ -250,7 +250,7 @@ export const GenerateDoc = () => {
                             margins: TableMargins,
                             children: [
                                 new Paragraph('dataLayer.push({'),
-                                new Paragraph('   event: "<<EVENT NAME>>",'),
+                                new Paragraph(`   event: "${eventName}",`),
                                 ...googleOrUniversal,
                                 new Paragraph('}); ')
                             ]
@@ -258,10 +258,7 @@ export const GenerateDoc = () => {
                     ],
                 }),
             ],
-            width: {
-                size: 100,
-                type: WidthType.PERCENTAGE
-            },
+            width: {size: 100,type: WidthType.PERCENTAGE}
         })
     } else {
         aTable = new Table({
@@ -276,7 +273,7 @@ export const GenerateDoc = () => {
                         },
                         margins: TableMargins,
                         children: [
-                            new Paragraph('mFirebaseAnalytics.logEvent("<<EVENT NAME>>", { '),
+                            new Paragraph(`mFirebaseAnalytics.logEvent("${eventName}", { `),
                             ...googleOrUniversal,
                             new Paragraph('}); ')
                         ]
@@ -369,7 +366,7 @@ export const GenerateDoc = () => {
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: "When:  ",
+                            text: "WHEN:  ",
                             bold: true,
                         }),
                         new TextRun({
@@ -381,7 +378,11 @@ export const GenerateDoc = () => {
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: "Then push the following data layer code:",
+                            text: "THEN:  ",
+                            bold: true,
+                        }),
+                        new TextRun({
+                            text: "push the following data layer code:",
                         })
                     ],
                     spacing: {before: spacing}
@@ -402,6 +403,11 @@ export const GenerateDoc = () => {
             alert(`Scenario ${scenarioCount} added to Scope ${scopeNames.length +1}`)
             setSelectedImage(null)
             setNewImage(false)
+            setEventName('')
+            setEventLabel('')
+            setEventAction('')
+            setEventCategory('')
+        
         } else {
             alert('Some fields are still empty!')
         }
@@ -439,7 +445,7 @@ export const GenerateDoc = () => {
             <Grid.Column style={{width: '70em', maxWidth:'80%'}} className="inputForm" >
                 <Form onSubmit={CreateScenario}>
                     <Grid>
-                        <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Word Document Generator!</h2></Grid.Row>
+                        <Grid.Row style={{justifyContent: 'center'}}> <h2 >Draft Requirement Document Generator! {`(Beta 3.1)`}</h2></Grid.Row>
                         <CustomDivider icon={'file word'} title={'File and Client Information'} />
                         <Grid.Row style={{justifyContent: 'center', marginBottom: '3rem'}}>
                             <Form.Group widths={'equal'}>
@@ -466,34 +472,71 @@ export const GenerateDoc = () => {
                         <CustomDivider icon={'image'} title={`Select Image and info for Scope ${scopeNames.length+1} - Scenario ${scenarioCount}`} />
                         <Grid.Row style={{justifyContent: 'center'}}>
                             <Form.Group style={{margin: '15px'}} grouped>
-                                    <ImageUploader setSelectedImage={setSelectedImage} setNewImage={setNewImage}/>
-                                    <Form.Input label="ON:" placeholder='the home page' value={onInput} maxLength={45} required className="input-labal" onChange={(e) => setOnInput(e.target.value)} />
-                                    <Form.Input label="WHEN:" placeholder='a user clicks the order button' value={whenInput} maxLength={100} required className="input-labal" onChange={(e) => setWhenInput(e.target.value)} />
-                                    <label>THEN: Push the folowing data layer code</label>
-                                    <Form.Checkbox checked={googleAnalytics} label={<label>Google Analytics 4</label>}onClick={(e, data) => setGoogleAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
-                                    <Form.Checkbox checked={universalAnalytics} label={<label>Universal Analytics</label>} onClick={(e, data) => setUniversalAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
-                                    
-                                    {draftType === "Web" && <Message>
+                                <ImageUploader setSelectedImage={setSelectedImage} setNewImage={setNewImage}/>
+                                <Form.Input label="ON:" placeholder='the home page' value={onInput} maxLength={45} required className="input-labal" onChange={(e) => setOnInput(e.target.value)} />
+                                <Form.Input label="WHEN:" placeholder='a user clicks the order button' value={whenInput} maxLength={100} required className="input-labal" onChange={(e) => setWhenInput(e.target.value)} />
+                                <label>THEN: Push the folowing data layer code</label>
+                                <Form.Checkbox checked={googleAnalytics} label={<label>Google Analytics 4</label>}onClick={(e, data) => setGoogleAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
+                                <Form.Checkbox checked={universalAnalytics} label={<label>Universal Analytics</label>} onClick={(e, data) => setUniversalAnalytics(data.checked)} error={areChecked ? false:{content: 'Select one',pointing: 'left'}}/>
+                                
+                                <Form.Field
+                                    control='input'
+                                    placeholder='event_name'
+                                    size='mini'
+                                    style={{width:'150px', height: '10px'}}
+                                    onChange={(e) => setEventName(e.target.value)}
+                                    value={eventName}
+                                    label="Event info (defaults to template if left blank)"
+                                />
+                                {universalAnalytics && <>
+                                    <Form.Field
+                                        control='input'
+                                        placeholder='Category'
+                                        size='mini'
+                                        style={{width:'150px', height: '10px'}}
+                                        onChange={(e) => setEventCategory(e.target.value)}
+                                        value={eventCategory}
+
+                                    />
+                                    <Form.Field
+                                        control='input'
+                                        placeholder='Action'
+                                        size='mini'
+                                        style={{width:'150px', height: '10px'}}
+                                        onChange={(e) => setEventAction(e.target.value)}
+                                        value={eventAction}
+                                    />
+                                    <Form.Field
+                                        control='input'
+                                        placeholder='Label'
+                                        size='mini'
+                                        style={{width:'150px', height: '10px'}}
+                                        onChange={(e) => setEventLabel(e.target.value)}
+                                        value={eventLabel}
+                                    />
+                                </>}
+                               
+                                {draftType === "Web" && <Message style={{minWidth: '390px'}}>
                                     <p style={{margin: '0px'}}> {`dataLayer.push({`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`event_name: "<<EVENT NAME>>",`}</p>
-                                    { universalAnalytics && <>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "<<CATEGORY>>",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "<<ACTION>>",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "<<LABEL>>",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`event_name: "${eventName ? eventName : '<<static event name>>'}",`}</p>
+                                    {universalAnalytics && <>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "${eventCategory ? eventCategory : '<<static event category>>'}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "${eventAction ? eventAction : '<<static event action>>'}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "${eventLabel ? eventLabel : '<<static event label>>'}",`}</p>
                                     </>}
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>"`}</p>
+                                    {/* <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>"`}</p> */}
                                     <p style={{margin: '0px'}}> {`})`}</p>
                                 </Message>}
-                                {draftType === "App" &&<Message>
-                                    <p style={{margin: '0px'}}> {`mFirebaseAnalytics.logEvent("<<EVENT NAME>>", {`}</p>
-                                    { universalAnalytics && <>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "<<CATEGORY>>",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "<<ACTION>>",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "<<LABEL>>",`}</p>
+                                {draftType === "App" &&<Message style={{width: '390px'}}>
+                                    <p style={{margin: '0px'}}> {`mFirebaseAnalytics.logEvent("${eventName ? eventName : '<<static event name>>'}", {`}</p>
+                                    {universalAnalytics && <>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`CATEGORY: "${eventCategory ? eventCategory : '<<static event category>>'}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`ACTION: "${eventAction ? eventAction : '<<static event action>>'}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`LABEL: "${eventLabel ? eventLabel : '<<static event label>>'}",`}</p>
                                     </>}
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
-                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>",`}</p>
+                                    {/* <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "{{DYNAMIC VALUE}}",`}</p>
+                                    <p style={{margin: '0px', paddingLeft:'2rem'}}> {`custom_parameter: "<<STATIC VALUE>>",`}</p> */}
                                     <p style={{margin: '0px'}}> {`})`}</p>
                                 </Message>}
                             </Form.Group>
@@ -554,5 +597,6 @@ export const GenerateDoc = () => {
             <br />
         </div>
     );
+
 }
 

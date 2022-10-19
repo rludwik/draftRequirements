@@ -2,7 +2,6 @@ import React from 'react'
 import {Header as SemanticHeader, Icon, Divider} from 'semantic-ui-react'
 
 const CustomDivider = (props) => {
-    console.log(props)
   return (
     <Divider horizontal>
         <SemanticHeader as='h4'>

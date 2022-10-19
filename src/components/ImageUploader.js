@@ -53,10 +53,12 @@ class ImageUploader extends React.Component {
     return (
       <div>
         <Button
-          content="Upload image for this scenario"
+          content="Upload image for scenario"
           labelPosition="left"
           icon="file"
-          as="label" htmlFor="file" type="button"
+          htmlFor="file" 
+          type="button"
+          as="label" 
         />
         <input type="file" id="file" style={{ display: "hidden" }} hidden onChange={this.handleFileInputChange} />
       </div>
